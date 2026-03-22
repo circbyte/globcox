@@ -26,8 +26,19 @@ import {
   TrendingUp,
   Menu,
   X,
-  LogOut
+  LogOut,
+  Mail,
+  Lock,
+  Key
 } from 'lucide-react';
+import { 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  sendSignInLinkToEmail, 
+  isSignInWithEmailLink, 
+  signInWithEmailLink 
+} from 'firebase/auth';
+import { actionCodeSettings } from './firebase';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -145,10 +156,10 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex justify-between items-center h-16">
           <Link to="/" className="hidden md:flex items-center space-x-2">
-            <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
               <Zap className="text-white w-5 h-5" />
             </div>
-            <span className="font-bold text-xl text-emerald-900">Malawi Market</span>
+            <span className="font-bold text-xl text-indigo-900">globcox</span>
           </Link>
 
           {/* Mobile Nav */}
@@ -159,7 +170,7 @@ const Navbar = () => {
                 to={item.path}
                 className={cn(
                   "flex flex-col items-center justify-center w-full py-1 transition-colors",
-                  location.pathname === item.path ? "text-emerald-600" : "text-gray-500"
+                  location.pathname === item.path ? "text-indigo-600" : "text-gray-500"
                 )}
               >
                 <item.icon className="w-6 h-6" />
@@ -176,7 +187,7 @@ const Navbar = () => {
                 to={item.path}
                 className={cn(
                   "flex items-center space-x-2 font-medium transition-colors",
-                  location.pathname === item.path ? "text-emerald-600" : "text-gray-600 hover:text-emerald-500"
+                  location.pathname === item.path ? "text-indigo-600" : "text-gray-600 hover:text-indigo-500"
                 )}
               >
                 <item.icon className="w-5 h-5" />
@@ -188,7 +199,7 @@ const Navbar = () => {
               onClick={() => setLowData(!lowData)}
               className={cn(
                 "flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-medium border transition-all",
-                lowData ? "bg-emerald-100 border-emerald-200 text-emerald-700" : "bg-gray-100 border-gray-200 text-gray-600"
+                lowData ? "bg-indigo-100 border-indigo-200 text-indigo-700" : "bg-gray-100 border-gray-200 text-gray-600"
               )}
             >
               <WifiOff className="w-3 h-3" />
@@ -200,9 +211,9 @@ const Navbar = () => {
                 <LogOut className="w-5 h-5" />
               </button>
             ) : (
-              <button onClick={login} className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700">
+              <Link to="/login" className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700">
                 Login
-              </button>
+              </Link>
             )}
           </div>
         </div>
@@ -247,7 +258,7 @@ const Home = () => {
               <input
                 type="text"
                 placeholder="Search maize, goats..."
-                className="w-full bg-gray-100 border-none rounded-xl py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-emerald-500"
+                className="w-full bg-gray-100 border-none rounded-xl py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-indigo-500"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -255,7 +266,7 @@ const Home = () => {
             <select 
               value={distance}
               onChange={(e) => setDistance(e.target.value)}
-              className="bg-gray-100 border-none rounded-xl text-xs font-medium focus:ring-2 focus:ring-emerald-500"
+              className="bg-gray-100 border-none rounded-xl text-xs font-medium focus:ring-2 focus:ring-indigo-500"
             >
               <option value="All">All Distances</option>
               <option value="5km">5km</option>
@@ -270,7 +281,7 @@ const Home = () => {
                 onClick={() => setFilter(cat)}
                 className={cn(
                   "px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all",
-                  filter === cat ? "bg-emerald-600 text-white shadow-md shadow-emerald-200" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  filter === cat ? "bg-indigo-600 text-white shadow-md shadow-indigo-200" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 )}
               >
                 {cat}
@@ -288,7 +299,7 @@ const Home = () => {
               <TrendingUp className="text-orange-500 w-5 h-5" />
               <h2 className="font-bold text-gray-900">Hot Right Now</h2>
             </div>
-            <span className="text-xs text-emerald-600 font-medium">Peak Hours</span>
+            <span className="text-xs text-indigo-600 font-medium">Peak Hours</span>
           </div>
           <div className="flex space-x-4 overflow-x-auto pb-4 no-scrollbar">
             {products.slice(0, 5).map((p) => (
@@ -298,7 +309,7 @@ const Home = () => {
                 )}
                 <div className="flex justify-between items-start">
                   <h3 className="font-semibold text-gray-900 line-clamp-1">{p.title}</h3>
-                  <span className="text-emerald-600 font-bold">MK {p.price.toLocaleString()}</span>
+                  <span className="text-indigo-600 font-bold">MK {p.price.toLocaleString()}</span>
                 </div>
                 <div className="flex items-center text-xs text-gray-500 mt-2">
                   <MapPin className="w-3 h-3 mr-1" />
@@ -482,7 +493,7 @@ const PostProduct = () => {
             <input
               type="checkbox"
               id="isDigital"
-              className="rounded text-emerald-600 focus:ring-emerald-500"
+              className="rounded text-indigo-600 focus:ring-indigo-500"
               checked={form.isDigital}
               onChange={(e) => {
                 if (e.target.checked && !user.isVerified) {
@@ -499,7 +510,7 @@ const PostProduct = () => {
         <button
           disabled={loading}
           type="submit"
-          className="w-full bg-emerald-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-emerald-100 disabled:opacity-50"
+          className="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-indigo-100 disabled:opacity-50"
         >
           {loading ? 'Posting...' : 'Post Listing'}
         </button>
@@ -560,8 +571,8 @@ const ProductDetail = () => {
           {!lowData && product.photoURL ? (
             <img src={product.photoURL} alt={product.title} className="w-full aspect-video object-cover md:rounded-2xl" referrerPolicy="no-referrer" />
           ) : (
-            <div className="w-full aspect-video bg-emerald-50 flex items-center justify-center md:rounded-2xl">
-              <Zap className="text-emerald-200 w-24 h-24" />
+            <div className="w-full aspect-video bg-indigo-50 flex items-center justify-center md:rounded-2xl">
+              <Zap className="text-indigo-200 w-24 h-24" />
             </div>
           )}
         </div>
@@ -576,7 +587,7 @@ const ProductDetail = () => {
               </div>
             </div>
             <div className="text-right">
-              <div className="text-2xl font-bold text-emerald-600">MK {product.price.toLocaleString()}</div>
+              <div className="text-2xl font-bold text-indigo-600">MK {product.price.toLocaleString()}</div>
               <span className="text-xs text-gray-400">Fixed Price</span>
             </div>
           </div>
@@ -588,7 +599,7 @@ const ProductDetail = () => {
 
           <div className="flex items-center justify-between p-4 border border-gray-100 rounded-2xl mb-8">
             <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center font-bold text-emerald-700">
+              <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center font-bold text-indigo-700">
                 {product.sellerName[0]}
               </div>
               <div>
@@ -602,20 +613,20 @@ const ProductDetail = () => {
                 </div>
               </div>
             </div>
-            <button className="text-emerald-600 text-sm font-bold">View Profile</button>
+            <button className="text-indigo-600 text-sm font-bold">View Profile</button>
           </div>
 
           <div className="fixed bottom-20 left-0 right-0 px-4 md:relative md:bottom-0 md:px-0 flex space-x-3">
             <button
               onClick={handleConnect}
-              className="flex-1 bg-emerald-600 text-white py-4 rounded-xl font-bold flex items-center justify-center space-x-2 shadow-lg shadow-emerald-100"
+              className="flex-1 bg-indigo-600 text-white py-4 rounded-xl font-bold flex items-center justify-center space-x-2 shadow-lg shadow-indigo-100"
             >
               <MessageSquare className="w-5 h-5" />
               <span>Chat Now</span>
             </button>
             <a
               href="tel:+265000000000"
-              className="w-16 bg-white border border-emerald-600 text-emerald-600 rounded-xl flex items-center justify-center shadow-sm"
+              className="w-16 bg-white border border-indigo-600 text-indigo-600 rounded-xl flex items-center justify-center shadow-sm"
             >
               <Phone className="w-6 h-6" />
             </a>
@@ -666,12 +677,12 @@ const ChatRoom = () => {
       <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-white">
         <div className="flex items-center space-x-3">
           <button onClick={() => navigate(-1)}><ArrowLeft className="w-5 h-5" /></button>
-          <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center text-xs font-bold text-emerald-700">S</div>
+          <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-xs font-bold text-indigo-700">S</div>
           <span className="font-bold">Seller Name</span>
         </div>
         <button 
           onClick={() => setShowRating(true)}
-          className="text-xs bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-full font-bold border border-emerald-100"
+          className="text-xs bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-full font-bold border border-indigo-100"
         >
           Deal Closed?
         </button>
@@ -682,7 +693,7 @@ const ChatRoom = () => {
           <div key={m.id} className={cn("flex", m.senderId === user?.uid ? "justify-end" : "justify-start")}>
             <div className={cn(
               "max-w-[80%] px-4 py-2 rounded-2xl text-sm",
-              m.senderId === user?.uid ? "bg-emerald-600 text-white rounded-tr-none" : "bg-white text-gray-800 rounded-tl-none shadow-sm"
+              m.senderId === user?.uid ? "bg-indigo-600 text-white rounded-tr-none" : "bg-white text-gray-800 rounded-tl-none shadow-sm"
             )}>
               {m.text}
             </div>
@@ -694,11 +705,11 @@ const ChatRoom = () => {
         <input
           type="text"
           placeholder="Type a message..."
-          className="flex-1 bg-gray-100 border-none rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-emerald-500"
+          className="flex-1 bg-gray-100 border-none rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500"
           value={text}
           onChange={(e) => setText(e.target.value)}
         />
-        <button type="submit" className="bg-emerald-600 text-white p-2 rounded-xl">
+        <button type="submit" className="bg-indigo-600 text-white p-2 rounded-xl">
           <Zap className="w-5 h-5 fill-white" />
         </button>
       </form>
@@ -713,8 +724,8 @@ const ChatRoom = () => {
               initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
               className="bg-white rounded-3xl p-6 w-full max-w-sm text-center"
             >
-              <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Star className="w-8 h-8 text-emerald-600 fill-emerald-600" />
+              <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Star className="w-8 h-8 text-indigo-600 fill-indigo-600" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">Rate your deal</h3>
               <p className="text-sm text-gray-500 mb-6">How was your experience with this seller?</p>
@@ -729,7 +740,7 @@ const ChatRoom = () => {
 
               <div className="flex space-x-3">
                 <button onClick={() => setShowRating(false)} className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl font-bold">Cancel</button>
-                <button onClick={() => setShowRating(false)} className="flex-1 py-3 bg-emerald-600 text-white rounded-xl font-bold">Submit</button>
+                <button onClick={() => setShowRating(false)} className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-bold">Submit</button>
               </div>
             </motion.div>
           </motion.div>
@@ -739,6 +750,126 @@ const ChatRoom = () => {
   );
 };
 
+const Login = () => {
+  const { login } = useContext(AuthContext);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [mode, setMode] = useState<'login' | 'signup' | 'passwordless'>('login');
+  const [message, setMessage] = useState('');
+  const navigate = useNavigate();
+
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (mode === 'signup') {
+        await createUserWithEmailAndPassword(auth, email, password);
+        navigate('/');
+      } else if (mode === 'login') {
+        await signInWithEmailAndPassword(auth, email, password);
+        navigate('/');
+      } else {
+        await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+        window.localStorage.setItem('emailForSignIn', email);
+        setMessage('Check your email for the sign-in link!');
+      }
+    } catch (error: any) {
+      setMessage(error.message);
+    }
+  };
+
+  return (
+    <div className="max-w-md mx-auto px-4 py-16">
+      <div className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <Zap className="text-white w-8 h-8" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900">Welcome to globcox</h2>
+          <p className="text-gray-500">Malawi's premier marketplace</p>
+        </div>
+
+        <form onSubmit={handleEmailAuth} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="email"
+                required
+                className="w-full pl-10 pr-4 py-2 bg-gray-50 border-gray-200 rounded-xl focus:ring-indigo-500 focus:border-indigo-500"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {mode !== 'passwordless' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input
+                  type="password"
+                  required
+                  className="w-full pl-10 pr-4 py-2 bg-gray-50 border-gray-200 rounded-xl focus:ring-indigo-500 focus:border-indigo-500"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
+
+          <button type="submit" className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold shadow-lg shadow-indigo-100">
+            {mode === 'login' ? 'Sign In' : mode === 'signup' ? 'Create Account' : 'Send Magic Link'}
+          </button>
+        </form>
+
+        <div className="mt-6 space-y-3">
+          <button onClick={login} className="w-full bg-white border border-gray-200 text-gray-700 py-3 rounded-xl font-bold flex items-center justify-center space-x-2">
+            <img src="https://www.google.com/favicon.ico" className="w-4 h-4" />
+            <span>Continue with Google</span>
+          </button>
+
+          <div className="flex justify-center space-x-4 text-sm">
+            <button onClick={() => setMode(mode === 'login' ? 'signup' : 'login')} className="text-indigo-600 font-medium">
+              {mode === 'login' ? 'Need an account?' : 'Already have an account?'}
+            </button>
+            <button onClick={() => setMode('passwordless')} className="text-gray-500">
+              Passwordless Sign-in
+            </button>
+          </div>
+        </div>
+
+        {message && <p className="mt-4 text-center text-sm text-indigo-600 font-medium">{message}</p>}
+      </div>
+    </div>
+  );
+};
+
+const FinishSignUp = () => {
+  const navigate = useNavigate();
+  useEffect(() => {
+    const finish = async () => {
+      if (isSignInWithEmailLink(auth, window.location.href)) {
+        let email = window.localStorage.getItem('emailForSignIn');
+        if (!email) {
+          email = window.prompt('Please provide your email for confirmation');
+        }
+        if (email) {
+          try {
+            await signInWithEmailLink(auth, email, window.location.href);
+            window.localStorage.removeItem('emailForSignIn');
+            navigate('/');
+          } catch (error) {
+            console.error(error);
+          }
+        }
+      }
+    };
+    finish();
+  }, [navigate]);
+  return <div className="p-8 text-center">Completing sign in...</div>;
+};
 const Profile = () => {
   const { user, login, logout } = useContext(AuthContext);
 
@@ -748,9 +879,9 @@ const Profile = () => {
         <UserIcon className="w-16 h-16 text-gray-300 mb-4" />
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Your Profile</h2>
         <p className="text-gray-600 mb-6">Track your deals, earnings, and saved interests.</p>
-        <button onClick={login} className="bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold">
-          Login with Google
-        </button>
+        <Link to="/login" className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold">
+          Login to globcox
+        </Link>
       </div>
     );
   }
@@ -758,7 +889,7 @@ const Profile = () => {
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 pb-24 md:pt-24">
       <div className="flex items-center space-x-4 mb-8">
-        <div className="w-20 h-20 bg-emerald-100 rounded-3xl flex items-center justify-center text-2xl font-bold text-emerald-700">
+        <div className="w-20 h-20 bg-indigo-100 rounded-3xl flex items-center justify-center text-2xl font-bold text-indigo-700">
           {user.displayName[0]}
         </div>
         <div>
@@ -777,15 +908,15 @@ const Profile = () => {
       </div>
 
       <div className="grid grid-cols-2 gap-4 mb-8">
-        <div className="bg-emerald-600 rounded-2xl p-4 text-white shadow-lg shadow-emerald-100">
+        <div className="bg-indigo-600 rounded-2xl p-4 text-white shadow-lg shadow-indigo-100">
           <p className="text-xs opacity-80 mb-1">Total Earnings</p>
           <p className="text-xl font-bold">MK {user.earnings.toLocaleString()}</p>
           <p className="text-[10px] opacity-60 mt-1">Keep it up! 🚀</p>
         </div>
         <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
           <p className="text-xs text-gray-500 mb-1">Saved This Week</p>
-          <p className="text-xl font-bold text-emerald-600">MK {user.savings.toLocaleString()}</p>
-          <p className="text-[10px] text-emerald-500 mt-1">Smart trading! 💡</p>
+          <p className="text-xl font-bold text-indigo-600">MK {user.savings.toLocaleString()}</p>
+          <p className="text-[10px] text-indigo-500 mt-1">Smart trading! 💡</p>
         </div>
       </div>
 
@@ -796,14 +927,14 @@ const Profile = () => {
             {CATEGORIES.slice(0, 4).map(c => (
               <span key={c} className="bg-gray-100 text-gray-700 px-3 py-1 rounded-lg text-sm">{c}</span>
             ))}
-            <button className="text-emerald-600 text-sm font-medium">+ Add More</button>
+            <button className="text-indigo-600 text-sm font-medium">+ Add More</button>
           </div>
         </section>
 
         <section className="bg-gray-50 rounded-2xl p-4">
           <h2 className="font-bold text-gray-900 mb-2">USSD Fallback</h2>
           <p className="text-xs text-gray-500 mb-3">No data? Use our USSD code to post or buy items on feature phones.</p>
-          <div className="bg-white border border-gray-200 rounded-xl p-3 font-mono text-center text-lg font-bold text-emerald-700">
+          <div className="bg-white border border-gray-200 rounded-xl p-3 font-mono text-center text-lg font-bold text-indigo-700">
             *384*123#
           </div>
         </section>
@@ -836,8 +967,8 @@ const ChatList = () => {
         <MessageSquare className="w-16 h-16 text-gray-300 mb-4" />
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Your Chats</h2>
         <p className="text-gray-600 mb-6">Login to see your conversations with buyers and sellers.</p>
-        <button onClick={login} className="bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold">
-          Login with Google
+        <button onClick={login} className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold">
+          Login to globcox
         </button>
       </div>
     );
@@ -850,7 +981,7 @@ const ChatList = () => {
         {chats.length === 0 && !loading && (
           <div className="text-center py-12 bg-gray-50 rounded-2xl">
             <p className="text-gray-500">No active chats yet.</p>
-            <Link to="/" className="text-emerald-600 font-bold mt-2 inline-block">Start Browsing</Link>
+            <Link to="/" className="text-indigo-600 font-bold mt-2 inline-block">Start Browsing</Link>
           </div>
         )}
         {chats.map((chat) => (
@@ -859,7 +990,7 @@ const ChatList = () => {
             to={`/chat/${chat.id}`}
             className="flex items-center space-x-4 p-4 bg-white border border-gray-100 rounded-2xl hover:shadow-md transition-shadow"
           >
-            <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center font-bold text-emerald-700">
+            <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center font-bold text-indigo-700">
               {chat.lastMessage[0]?.toUpperCase() || '?'}
             </div>
             <div className="flex-1 min-w-0">
@@ -885,7 +1016,7 @@ export default function App() {
     <AuthProvider>
       <LowDataProvider>
         <Router>
-          <div className="min-h-screen bg-white text-gray-900 font-sans selection:bg-emerald-100 selection:text-emerald-900">
+          <div className="min-h-screen bg-white text-gray-900 font-sans selection:bg-indigo-100 selection:text-indigo-900">
             <Navbar />
             <main className="pb-16 md:pb-0">
               <Routes>
@@ -895,6 +1026,8 @@ export default function App() {
                 <Route path="/chats" element={<ChatList />} />
                 <Route path="/chat/:id" element={<ChatRoom />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/finishSignUp" element={<FinishSignUp />} />
               </Routes>
             </main>
           </div>
