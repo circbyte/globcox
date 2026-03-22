@@ -1,9 +1,10 @@
 {
-  "apiKey": "AIzaSyD-YOUR_API_KEY_HERE",
-  "authDomain": "gen-lang-client-0902657675.firebaseapp.com",
-  "projectId": "gen-lang-client-0902657675",
-  "storageBucket": "gen-lang-client-0902657675.appspot.com",
-  "messagingSenderId": "123456789012",
-  "appId": "1:123456789012:web:abcdef1234567890",
+  "apiKey": "AIzaSyBk-gLe7N6RnZuZQacO8DznCfAaUm06B7Y",
+  "authDomain": "globcoxapp.firebaseapp.com",
+  "projectId": "globcoxapp",
+  "storageBucket": "globcoxapp.firebasestorage.app",
+  "messagingSenderId": "757080979256",
+  "appId": "1:757080979256:web:b078fa8b9d18c5f730f3cd",
+  "measurementId": "G-J52Y0H5NFM",
   "firestoreDatabaseId": "(default)"
 }
