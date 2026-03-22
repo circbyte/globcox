@@ -4,6 +4,7 @@
  */
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import imageCompression from 'browser-image-compression';
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation, useParams } from 'react-router-dom';
 import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 import { doc, getDoc, setDoc, onSnapshot, collection, query, where, orderBy, limit, serverTimestamp, addDoc, updateDoc } from 'firebase/firestore';
@@ -248,17 +249,17 @@ const Home = () => {
   });
 
   return (
-    <div className="pb-20 md:pt-20">
+    <div className="min-h-screen bg-gray-50 pb-20 md:pt-20">
       {/* Search & Filters */}
-      <div className="sticky top-0 md:top-16 bg-white/80 backdrop-blur-md border-b border-gray-100 z-40 px-4 py-3">
-        <div className="max-w-7xl mx-auto space-y-3">
-          <div className="flex space-x-2">
+      <div className="sticky top-0 md:top-16 bg-white/95 backdrop-blur-sm border-b border-gray-100 z-40 px-4 py-4 shadow-sm">
+        <div className="max-w-7xl mx-auto space-y-4">
+          <div className="flex space-x-3">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
                 placeholder="Search maize, goats..."
-                className="w-full bg-gray-100 border-none rounded-xl py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-indigo-500"
+                className="w-full bg-gray-100 border-none rounded-2xl py-3 pl-12 pr-4 text-sm focus:ring-2 focus:ring-indigo-500 transition-all"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -266,7 +267,7 @@ const Home = () => {
             <select 
               value={distance}
               onChange={(e) => setDistance(e.target.value)}
-              className="bg-gray-100 border-none rounded-xl text-xs font-medium focus:ring-2 focus:ring-indigo-500"
+              className="bg-gray-100 border-none rounded-2xl px-4 text-xs font-semibold focus:ring-2 focus:ring-indigo-500 transition-all"
             >
               <option value="All">All Distances</option>
               <option value="5km">5km</option>
@@ -274,14 +275,14 @@ const Home = () => {
               <option value="District">District</option>
             </select>
           </div>
-          <div className="flex space-x-2 overflow-x-auto pb-1 no-scrollbar">
+          <div className="flex space-x-3 overflow-x-auto pb-1 no-scrollbar">
             {['All', ...CATEGORIES].map((cat) => (
               <button
                 key={cat}
                 onClick={() => setFilter(cat)}
                 className={cn(
-                  "px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all",
-                  filter === cat ? "bg-indigo-600 text-white shadow-md shadow-indigo-200" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  "px-6 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-300",
+                  filter === cat ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200" : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
                 )}
               >
                 {cat}
@@ -291,28 +292,30 @@ const Home = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 mt-4">
+      <div className="max-w-7xl mx-auto px-4 mt-8">
         {/* Hot Right Now */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-2">
-              <TrendingUp className="text-orange-500 w-5 h-5" />
-              <h2 className="font-bold text-gray-900">Hot Right Now</h2>
+        <div className="mb-10">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-orange-100 rounded-xl">
+                <TrendingUp className="text-orange-600 w-6 h-6" />
+              </div>
+              <h2 className="font-bold text-2xl text-gray-900">Hot Right Now</h2>
             </div>
-            <span className="text-xs text-indigo-600 font-medium">Peak Hours</span>
+            <span className="text-sm text-indigo-600 font-semibold bg-indigo-50 px-4 py-1.5 rounded-full">Peak Hours</span>
           </div>
-          <div className="flex space-x-4 overflow-x-auto pb-4 no-scrollbar">
+          <div className="flex space-x-6 overflow-x-auto pb-6 no-scrollbar">
             {products.slice(0, 5).map((p) => (
-              <Link key={p.id} to={`/product/${p.id}`} className="flex-shrink-0 w-64 bg-white border border-gray-100 rounded-2xl p-3 shadow-sm hover:shadow-md transition-shadow">
+              <Link key={p.id} to={`/product/${p.id}`} className="flex-shrink-0 w-72 bg-white border border-gray-100 rounded-3xl p-4 shadow-sm hover:shadow-xl transition-all duration-300">
                 {!lowData && p.photoURL && (
-                  <img src={p.photoURL} alt={p.title} className="w-full h-32 object-cover rounded-xl mb-3" referrerPolicy="no-referrer" />
+                  <img src={p.photoURL} alt={p.title} className="w-full h-40 object-cover rounded-2xl mb-4" referrerPolicy="no-referrer" />
                 )}
                 <div className="flex justify-between items-start">
-                  <h3 className="font-semibold text-gray-900 line-clamp-1">{p.title}</h3>
-                  <span className="text-indigo-600 font-bold">MK {p.price.toLocaleString()}</span>
+                  <h3 className="font-bold text-gray-900 text-lg line-clamp-1">{p.title}</h3>
+                  <span className="text-indigo-600 font-bold text-lg">MK {p.price.toLocaleString()}</span>
                 </div>
-                <div className="flex items-center text-xs text-gray-500 mt-2">
-                  <MapPin className="w-3 h-3 mr-1" />
+                <div className="flex items-center text-sm text-gray-500 mt-3">
+                  <MapPin className="w-4 h-4 mr-1.5" />
                   {p.location}
                 </div>
               </Link>
@@ -321,38 +324,37 @@ const Home = () => {
         </div>
 
         {/* Main Feed */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProducts.map((p) => (
-            <Link key={p.id} to={`/product/${p.id}`} className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all group">
+            <Link key={p.id} to={`/product/${p.id}`} className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 group">
               {!lowData && p.photoURL ? (
                 <div className="aspect-video overflow-hidden">
-                  <img src={p.photoURL} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" referrerPolicy="no-referrer" />
+                  <img src={p.photoURL} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" />
                 </div>
               ) : (
-                <div className="aspect-video bg-emerald-50 flex items-center justify-center">
-                  <Zap className="text-emerald-200 w-12 h-12" />
+                <div className="aspect-video bg-indigo-50 flex items-center justify-center">
+                  <Zap className="text-indigo-200 w-12 h-12" />
                 </div>
               )}
-              <div className="p-4">
-                <div className="flex justify-between items-start mb-2">
+              <div className="p-5">
+                <div className="flex justify-between items-start mb-3">
                   <div>
-                    <h3 className="font-bold text-gray-900 text-lg">{p.title}</h3>
-                    <p className="text-xs text-gray-500">{p.category}</p>
+                    <h3 className="font-bold text-gray-900 text-lg group-hover:text-indigo-600 transition-colors">{p.title}</h3>
+                    <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">{p.category}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-emerald-600 font-bold text-lg">MK {p.price.toLocaleString()}</p>
-                    <p className="text-[10px] text-gray-400">Negotiable</p>
+                    <p className="text-indigo-600 font-bold text-lg">MK {p.price.toLocaleString()}</p>
+                    <p className="text-[10px] text-gray-400 uppercase">Negotiable</p>
                   </div>
                 </div>
-                <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-50">
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
                   <div className="flex items-center space-x-2">
-                    <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-[10px] font-bold">
+                    <div className="w-7 h-7 bg-indigo-100 rounded-full flex items-center justify-center text-[10px] font-bold text-indigo-700">
                       {p.sellerName[0]}
                     </div>
-                    <span className="text-xs text-gray-600">{p.sellerName}</span>
-                    <ShieldCheck className="w-3 h-3 text-blue-500" />
+                    <span className="text-xs font-medium text-gray-700">{p.sellerName}</span>
                   </div>
-                  <div className="flex items-center text-xs text-gray-500">
+                  <div className="flex items-center text-xs text-gray-400">
                     <MapPin className="w-3 h-3 mr-1" />
                     {p.location}
                   </div>
@@ -397,8 +399,11 @@ const PostProduct = () => {
     e.preventDefault();
     setLoading(true);
     try {
+      let photoURL = form.photoURL;
+      
       const productData = {
         ...form,
+        photoURL,
         price: Number(form.price),
         sellerId: user.uid,
         sellerName: user.displayName,
@@ -413,6 +418,22 @@ const PostProduct = () => {
       setLoading(false);
     }
   };
+
+  // Helper to compress image
+  const compressImage = async (file: File) => {
+    const options = {
+      maxSizeMB: 0.1, // 100KB
+      maxWidthOrHeight: 1024,
+      useWebWorker: true,
+    };
+    try {
+      return await imageCompression(file, options);
+    } catch (error) {
+      console.error('Compression error:', error);
+      return file;
+    }
+  };
+
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 pb-24 md:pt-24">
