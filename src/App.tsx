@@ -10,6 +10,7 @@ import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 import { doc, getDoc, setDoc, onSnapshot, collection, query, where, orderBy, limit, serverTimestamp, addDoc, updateDoc } from 'firebase/firestore';
 import { auth, db, googleProvider, OperationType, handleFirestoreError } from './firebase';
 import { UserProfile, Product, CATEGORIES, Message, Chat } from './types';
+import { GoogleGenAI } from "@google/genai";
 import { 
   Home as HomeIcon, 
   PlusCircle, 
@@ -368,6 +369,26 @@ const Home = () => {
   );
 };
 
+const RequireAuthPrompt = ({ title, description, icon: Icon }: { title: string, description: string, icon: any }) => {
+  const location = useLocation();
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
+      <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mb-6">
+        <Icon className="w-10 h-10 text-indigo-600" />
+      </div>
+      <h2 className="text-2xl font-bold text-gray-900 mb-2">{title}</h2>
+      <p className="text-gray-600 mb-8 max-w-sm">{description}</p>
+      <Link 
+        to="/login" 
+        state={{ from: location }}
+        className="bg-indigo-600 text-white px-8 py-3.5 rounded-xl font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all w-full max-w-xs"
+      >
+        Login or Sign Up
+      </Link>
+    </div>
+  );
+};
+
 const PostProduct = () => {
   const { user, login } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -383,27 +404,15 @@ const PostProduct = () => {
   });
 
   if (!user) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
-        <ShieldCheck className="w-16 h-16 text-emerald-600 mb-4" />
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Login to Sell</h2>
-        <p className="text-gray-600 mb-6">Join thousands of Malawians trading safely every day.</p>
-        <button onClick={login} className="bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-emerald-200">
-          Login with Google
-        </button>
-      </div>
-    );
+    return <RequireAuthPrompt title="Login to Sell" description="Join thousands of Malawians trading safely every day." icon={ShieldCheck} />;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      let photoURL = form.photoURL;
-      
       const productData = {
         ...form,
-        photoURL,
         price: Number(form.price),
         sellerId: user.uid,
         sellerName: user.displayName,
@@ -434,19 +443,62 @@ const PostProduct = () => {
     }
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    try {
+      const compressedFile = await compressImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setForm({ ...form, photoURL: reader.result as string });
+      };
+      reader.readAsDataURL(compressedFile);
+    } catch (error) {
+      console.error("Error reading file", error);
+    }
+  };
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 pb-24 md:pt-24">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Post an Item</h1>
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="space-y-4">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">Post an Item</h1>
+        <p className="text-gray-500 mt-2">Fill in the details below to list your product.</p>
+      </div>
+      
+      <form onSubmit={handleSubmit} className="space-y-8">
+        {/* Image Upload Section */}
+        <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+          <h2 className="text-lg font-bold text-gray-900 mb-4">Product Photo</h2>
+          <div className="flex items-center justify-center w-full">
+            <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-indigo-200 rounded-2xl cursor-pointer bg-indigo-50/50 hover:bg-indigo-50 transition-colors relative overflow-hidden">
+              {form.photoURL ? (
+                <img src={form.photoURL} alt="Preview" className="w-full h-full object-cover" />
+              ) : (
+                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                  <div className="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mb-3">
+                    <PlusCircle className="w-6 h-6" />
+                  </div>
+                  <p className="mb-1 text-sm font-semibold text-indigo-600">Click to upload photo</p>
+                  <p className="text-xs text-gray-500">PNG, JPG up to 5MB</p>
+                </div>
+              )}
+              <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+            </label>
+          </div>
+        </div>
+
+        {/* Details Section */}
+        <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 space-y-5">
+          <h2 className="text-lg font-bold text-gray-900 mb-2">Product Details</h2>
+          
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">What are you selling?</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">What are you selling?</label>
             <input
               required
               type="text"
               placeholder="e.g. 50kg Maize, Boer Goat"
-              className="w-full border-gray-200 rounded-xl focus:ring-emerald-500 focus:border-emerald-500"
+              className="w-full border-gray-200 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 px-4 py-3 bg-gray-50"
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
             />
@@ -454,20 +506,23 @@ const PostProduct = () => {
           
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Price (MK)</label>
-              <input
-                required
-                type="number"
-                placeholder="Amount"
-                className="w-full border-gray-200 rounded-xl focus:ring-emerald-500 focus:border-emerald-500"
-                value={form.price}
-                onChange={(e) => setForm({ ...form, price: e.target.value })}
-              />
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Price (MK)</label>
+              <div className="relative">
+                <span className="absolute left-4 top-3.5 text-gray-500 font-medium">MK</span>
+                <input
+                  required
+                  type="number"
+                  placeholder="0.00"
+                  className="w-full border-gray-200 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 pl-12 pr-4 py-3 bg-gray-50"
+                  value={form.price}
+                  onChange={(e) => setForm({ ...form, price: e.target.value })}
+                />
+              </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Category</label>
               <select
-                className="w-full border-gray-200 rounded-xl focus:ring-emerald-500 focus:border-emerald-500"
+                className="w-full border-gray-200 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 px-4 py-3 bg-gray-50"
                 value={form.category}
                 onChange={(e) => setForm({ ...form, category: e.target.value })}
               >
@@ -477,63 +532,66 @@ const PostProduct = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Location (Village/Trading Centre)</label>
-            <input
-              required
-              type="text"
-              placeholder="e.g. Mitundu, Lilongwe"
-              className="w-full border-gray-200 rounded-xl focus:ring-emerald-500 focus:border-emerald-500"
-              value={form.location}
-              onChange={(e) => setForm({ ...form, location: e.target.value })}
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Location</label>
+            <div className="relative">
+              <MapPin className="absolute left-4 top-3.5 w-5 h-5 text-gray-400" />
+              <input
+                required
+                type="text"
+                placeholder="e.g. Mitundu, Lilongwe"
+                className="w-full border-gray-200 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 pl-11 pr-4 py-3 bg-gray-50"
+                value={form.location}
+                onChange={(e) => setForm({ ...form, location: e.target.value })}
+              />
+            </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Description</label>
             <textarea
               rows={4}
               placeholder="Tell buyers more about your product..."
-              className="w-full border-gray-200 rounded-xl focus:ring-emerald-500 focus:border-emerald-500"
+              className="w-full border-gray-200 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 px-4 py-3 bg-gray-50 resize-none"
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Photo URL (Optional)</label>
-            <input
-              type="url"
-              placeholder="https://..."
-              className="w-full border-gray-200 rounded-xl focus:ring-emerald-500 focus:border-emerald-500"
-              value={form.photoURL}
-              onChange={(e) => setForm({ ...form, photoURL: e.target.value })}
-            />
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="isDigital"
-              className="rounded text-indigo-600 focus:ring-indigo-500"
-              checked={form.isDigital}
-              onChange={(e) => {
-                if (e.target.checked && !user.isVerified) {
-                  alert("Only verified sellers can post digital products. Please verify your identity in profile.");
-                  return;
-                }
-                setForm({ ...form, isDigital: e.target.checked });
-              }}
-            />
-            <label htmlFor="isDigital" className="text-sm text-gray-700">This is a digital product (eBook, etc.)</label>
-          </div>
+          <label className="flex items-start space-x-3 p-4 border border-gray-100 rounded-xl bg-gray-50/50 cursor-pointer hover:bg-gray-50 transition-colors">
+            <div className="flex items-center h-5 mt-0.5">
+              <input
+                type="checkbox"
+                className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                checked={form.isDigital}
+                onChange={(e) => {
+                  if (e.target.checked && !user.isVerified) {
+                    alert("Only verified sellers can post digital products. Please verify your identity in profile.");
+                    return;
+                  }
+                  setForm({ ...form, isDigital: e.target.checked });
+                }}
+              />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-900">Digital Product</p>
+              <p className="text-xs text-gray-500 mt-0.5">Check this if you are selling an eBook, software, or other digital goods.</p>
+            </div>
+          </label>
         </div>
 
         <button
           disabled={loading}
           type="submit"
-          className="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-indigo-100 disabled:opacity-50"
+          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-bold text-lg shadow-lg shadow-indigo-200 disabled:opacity-50 transition-all flex justify-center items-center space-x-2"
         >
-          {loading ? 'Posting...' : 'Post Listing'}
+          {loading ? (
+            <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          ) : (
+            <>
+              <PlusCircle className="w-6 h-6" />
+              <span>Post Listing</span>
+            </>
+          )}
         </button>
       </form>
     </div>
@@ -547,6 +605,7 @@ const ProductDetail = () => {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     if (!id) return;
@@ -560,7 +619,10 @@ const ProductDetail = () => {
   }, [id]);
 
   const handleConnect = async () => {
-    if (!user) return login();
+    if (!user) {
+      navigate('/login', { state: { from: location } });
+      return;
+    }
     if (!product) return;
     
     // Create or find chat
@@ -674,6 +736,10 @@ const ChatRoom = () => {
     });
   }, [id]);
 
+  if (!user) {
+    return <RequireAuthPrompt title="Login to Chat" description="You need to be logged in to send and receive messages." icon={MessageSquare} />;
+  }
+
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!text.trim() || !user || !id) return;
@@ -779,20 +845,32 @@ const Login = () => {
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
 
+  const location = useLocation();
+  const from = location.state?.from?.pathname || '/profile';
+
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       if (mode === 'signup') {
         await createUserWithEmailAndPassword(auth, email, password);
-        navigate('/');
+        navigate(from, { replace: true });
       } else if (mode === 'login') {
         await signInWithEmailAndPassword(auth, email, password);
-        navigate('/');
+        navigate(from, { replace: true });
       } else {
         await sendSignInLinkToEmail(auth, email, actionCodeSettings);
         window.localStorage.setItem('emailForSignIn', email);
         setMessage('Check your email for the sign-in link!');
       }
+    } catch (error: any) {
+      setMessage(error.message);
+    }
+  };
+
+  const handleGoogleAuth = async () => {
+    try {
+      await login();
+      navigate(from, { replace: true });
     } catch (error: any) {
       setMessage(error.message);
     }
@@ -846,7 +924,7 @@ const Login = () => {
         </form>
 
         <div className="mt-6 space-y-3">
-          <button onClick={login} className="w-full bg-white border border-gray-200 text-gray-700 py-3 rounded-xl font-bold flex items-center justify-center space-x-2">
+          <button onClick={handleGoogleAuth} className="w-full bg-white border border-gray-200 text-gray-700 py-3 rounded-xl font-bold flex items-center justify-center space-x-2">
             <img src="https://www.google.com/favicon.ico" className="w-4 h-4" />
             <span>Continue with Google</span>
           </button>
@@ -869,6 +947,9 @@ const Login = () => {
 
 const FinishSignUp = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || '/profile';
+
   useEffect(() => {
     const finish = async () => {
       if (isSignInWithEmailLink(auth, window.location.href)) {
@@ -880,7 +961,7 @@ const FinishSignUp = () => {
           try {
             await signInWithEmailLink(auth, email, window.location.href);
             window.localStorage.removeItem('emailForSignIn');
-            navigate('/');
+            navigate(from, { replace: true });
           } catch (error) {
             console.error(error);
           }
@@ -888,23 +969,82 @@ const FinishSignUp = () => {
       }
     };
     finish();
-  }, [navigate]);
+  }, [navigate, from]);
   return <div className="p-8 text-center">Completing sign in...</div>;
 };
 const Profile = () => {
   const { user, login, logout } = useContext(AuthContext);
+  const [myProducts, setMyProducts] = useState<Product[]>([]);
+  const [generatingImages, setGeneratingImages] = useState(false);
+  const [imageMessage, setImageMessage] = useState('');
+
+  useEffect(() => {
+    if (!user) return;
+    const q = query(collection(db, 'products'), where('sellerId', '==', user.uid));
+    return onSnapshot(q, (snapshot) => {
+      const products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+      products.sort((a, b) => {
+        const dateA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+        const dateB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+        return dateB - dateA;
+      });
+      setMyProducts(products);
+    }, (error) => handleFirestoreError(error, OperationType.LIST, 'products'));
+  }, [user]);
+
+  const handleGenerateImages = async () => {
+    setGeneratingImages(true);
+    setImageMessage('Generating images... this may take a minute.');
+    try {
+      const ai = new GoogleGenAI({ apiKey: (import.meta as any).env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY });
+      
+      const iconResponse = await ai.models.generateContent({
+        model: 'gemini-2.5-flash-image',
+        contents: {
+          parts: [
+            {
+              text: 'A professional, modern, minimalist logo for a marketplace app named "globcox". The logo should feature a stylized "G" or an abstract symbol representing connection and trade. Use a deep indigo and vibrant violet color palette. White background, high resolution, vector style.',
+            },
+          ],
+        },
+      });
+
+      const ogResponse = await ai.models.generateContent({
+        model: 'gemini-2.5-flash-image',
+        contents: {
+          parts: [
+            {
+              text: 'A professional marketing banner for "globcox", Malawi\'s premier marketplace. Show a clean, modern interface with agricultural products (maize, livestock) and digital icons (eBooks) floating in a sophisticated indigo and violet environment. High quality, 16:9 aspect ratio.',
+            },
+          ],
+        },
+        config: {
+          imageConfig: {
+            aspectRatio: "16:9"
+          }
+        }
+      });
+
+      const iconData = iconResponse.candidates?.[0]?.content?.parts.find(p => p.inlineData)?.inlineData?.data;
+      const ogData = ogResponse.candidates?.[0]?.content?.parts.find(p => p.inlineData)?.inlineData?.data;
+
+      if (iconData && ogData) {
+        // In a real app, we would upload these to Firebase Storage and update the manifest/meta tags.
+        // For this demo, we'll just show a success message since we can't write to the file system from the client.
+        setImageMessage('Images generated successfully! (Note: In a production app, these would be saved to the server).');
+      } else {
+        setImageMessage('Failed to generate images.');
+      }
+    } catch (error: any) {
+      console.error(error);
+      setImageMessage('Error generating images: ' + error.message);
+    } finally {
+      setGeneratingImages(false);
+    }
+  };
 
   if (!user) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
-        <UserIcon className="w-16 h-16 text-gray-300 mb-4" />
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Your Profile</h2>
-        <p className="text-gray-600 mb-6">Track your deals, earnings, and saved interests.</p>
-        <Link to="/login" className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold">
-          Login to globcox
-        </Link>
-      </div>
-    );
+    return <RequireAuthPrompt title="Your Profile" description="Track your deals, earnings, and saved interests." icon={UserIcon} />;
   }
 
   return (
@@ -960,6 +1100,52 @@ const Profile = () => {
           </div>
         </section>
 
+        {user.displayName === 'Admin' || user.email === 'circbyte@gmail.com' ? (
+          <section className="bg-indigo-50 rounded-2xl p-4 border border-indigo-100">
+            <h2 className="font-bold text-indigo-900 mb-2">Admin Tools</h2>
+            <p className="text-xs text-indigo-700 mb-3">Generate PWA assets (Icons & OG Image) using Gemini.</p>
+            <button 
+              onClick={handleGenerateImages}
+              disabled={generatingImages}
+              className="w-full bg-indigo-600 text-white py-2 rounded-xl font-bold text-sm disabled:opacity-50"
+            >
+              {generatingImages ? 'Generating...' : 'Generate PWA Images'}
+            </button>
+            {imageMessage && <p className="text-xs text-indigo-700 mt-2">{imageMessage}</p>}
+          </section>
+        ) : null}
+
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-bold text-gray-900">My Products</h2>
+            <Link to="/post" className="text-sm text-indigo-600 font-medium hover:underline">Post New</Link>
+          </div>
+          {myProducts.length === 0 ? (
+            <div className="text-center py-8 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+              <p className="text-sm text-gray-500">You haven't posted any products yet.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {myProducts.map(p => (
+                <Link key={p.id} to={`/product/${p.id}`} className="flex items-center space-x-3 bg-white border border-gray-100 p-3 rounded-xl hover:shadow-sm transition-shadow">
+                  {p.photoURL ? (
+                    <img src={p.photoURL} alt={p.title} className="w-16 h-16 object-cover rounded-lg" referrerPolicy="no-referrer" />
+                  ) : (
+                    <div className="w-16 h-16 bg-indigo-50 rounded-lg flex items-center justify-center">
+                      <Zap className="w-6 h-6 text-indigo-200" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-gray-900 text-sm truncate">{p.title}</h3>
+                    <p className="text-indigo-600 font-bold text-sm">MK {p.price.toLocaleString()}</p>
+                    <p className="text-xs text-gray-500 truncate">{p.category}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
+
         <button onClick={logout} className="w-full text-red-500 font-medium py-3 border border-red-100 rounded-xl">
           Log Out
         </button>
@@ -983,16 +1169,7 @@ const ChatList = () => {
   }, [user]);
 
   if (!user) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
-        <MessageSquare className="w-16 h-16 text-gray-300 mb-4" />
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Your Chats</h2>
-        <p className="text-gray-600 mb-6">Login to see your conversations with buyers and sellers.</p>
-        <button onClick={login} className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold">
-          Login to globcox
-        </button>
-      </div>
-    );
+    return <RequireAuthPrompt title="Your Chats" description="Login to see your conversations with buyers and sellers." icon={MessageSquare} />;
   }
 
   return (

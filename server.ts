@@ -77,9 +77,6 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  // Generate images on startup
-  await generateImages();
-
   // API routes go here
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok" });

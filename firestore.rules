@@ -85,17 +85,23 @@ service cloud.firestore {
 
     function isValidUser(data) {
       return hasRequiredFields(['uid', 'displayName', 'email']) &&
-             hasOnlyAllowedFields(['uid', 'displayName', 'email', 'photoURL', 'isVerified', 'createdAt']) &&
+             hasOnlyAllowedFields(['uid', 'displayName', 'email', 'photoURL', 'isVerified', 'createdAt', 'phoneNumber', 'interests', 'earnings', 'savings', 'streak', 'lastActive']) &&
              data.uid == request.auth.uid &&
              data.displayName is string && data.displayName.size() > 0 && data.displayName.size() < 100 &&
-             data.email is string && data.email.size() > 0 && data.email.size() < 200 &&
+             data.email is string && data.email.size() >= 0 && data.email.size() < 200 &&
              isValidOptionalString('photoURL', 0, 1000) &&
-             (!( 'createdAt' in data ) || data.createdAt is timestamp);
+             (!( 'createdAt' in data ) || data.createdAt is timestamp) &&
+             (!( 'phoneNumber' in data ) || data.phoneNumber is string) &&
+             (!( 'interests' in data ) || data.interests is list) &&
+             (!( 'earnings' in data ) || data.earnings is number) &&
+             (!( 'savings' in data ) || data.savings is number) &&
+             (!( 'streak' in data ) || data.streak is number) &&
+             (!( 'lastActive' in data ) || data.lastActive is timestamp);
     }
 
     function isValidProduct(data) {
       return hasRequiredFields(['title', 'price', 'category', 'sellerId', 'sellerName']) &&
-             hasOnlyAllowedFields(['title', 'description', 'price', 'category', 'condition', 'isDigital', 'photoURL', 'sellerId', 'sellerName', 'createdAt', 'isSold']) &&
+             hasOnlyAllowedFields(['title', 'description', 'price', 'category', 'condition', 'isDigital', 'photoURL', 'sellerId', 'sellerName', 'createdAt', 'isSold', 'location', 'lat', 'lng']) &&
              data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
              isValidOptionalString('description', 0, 5000) &&
              data.price is number && data.price >= 0 &&
@@ -106,7 +112,10 @@ service cloud.firestore {
              data.sellerId == request.auth.uid &&
              data.sellerName is string && data.sellerName.size() > 0 && data.sellerName.size() < 100 &&
              (!( 'createdAt' in data ) || data.createdAt is timestamp) &&
-             (!( 'isSold' in data ) || data.isSold is bool);
+             (!( 'isSold' in data ) || data.isSold is bool) &&
+             (!( 'location' in data ) || data.location is string) &&
+             (!( 'lat' in data ) || data.lat is number) &&
+             (!( 'lng' in data ) || data.lng is number);
     }
 
     function isValidChat(data) {
