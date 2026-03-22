@@ -1,0 +1,86 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "phoneNumber": { "type": "string" },
+        "isVerified": { "type": "boolean" },
+        "interests": { "type": "array", "items": { "type": "string" } },
+        "earnings": { "type": "number" },
+        "savings": { "type": "number" },
+        "streak": { "type": "number" },
+        "lastActive": { "type": "string", "format": "date-time" }
+      },
+      "required": ["displayName", "phoneNumber"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Marketplace listing",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "location": { "type": "string" },
+        "category": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "sellerId": { "type": "string" },
+        "sellerName": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "isSold": { "type": "boolean" },
+        "isDigital": { "type": "boolean" },
+        "lat": { "type": "number" },
+        "lng": { "type": "number" }
+      },
+      "required": ["title", "price", "location", "category", "sellerId"]
+    },
+    "Chat": {
+      "title": "Chat",
+      "description": "Conversation between buyer and seller",
+      "type": "object",
+      "properties": {
+        "participants": { "type": "array", "items": { "type": "string" } },
+        "lastMessage": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "productId": { "type": "string" }
+      }
+    },
+    "Message": {
+      "title": "Message",
+      "description": "Individual message in a chat",
+      "type": "object",
+      "properties": {
+        "chatId": { "type": "string" },
+        "senderId": { "type": "string" },
+        "text": { "type": "string" },
+        "voiceURL": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Review": {
+      "title": "Review",
+      "description": "User rating after a deal",
+      "type": "object",
+      "properties": {
+        "reviewerId": { "type": "string" },
+        "revieweeId": { "type": "string" },
+        "rating": { "type": "number" },
+        "comment": { "type": "string" },
+        "productId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "firestore": {
+    "/users/{userId}": { "schema": "User", "description": "User profiles" },
+    "/products/{productId}": { "schema": "Product", "description": "Marketplace listings" },
+    "/chats/{chatId}": { "schema": "Chat", "description": "Conversations" },
+    "/chats/{chatId}/messages/{messageId}": { "schema": "Message", "description": "Messages within a chat" },
+    "/reviews/{reviewId}": { "schema": "Review", "description": "User reviews" }
+  }
+}

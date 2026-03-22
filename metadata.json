@@ -1,0 +1,5 @@
+{
+  "name": "Malawi Marketplace",
+  "description": "A low-data, high-trust marketplace for Malawi. Buy and sell agricultural products, livestock, and digital goods with real-time chat and smart local feeds.",
+  "requestFramePermissions": ["geolocation"]
+}
